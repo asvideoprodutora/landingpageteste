@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Galeria de fotos do Acidente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;600&family=Instrument+Serif&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #eef1f0;
+    --ink: #1c2b2a;
+    --muted: #5d6d6b;
+    --accent: #1f6f68;
+    --card: #dfe5e3;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121a1a; --ink: #e6efed; --muted: #93a5a2; --accent: #6fc3ba; --card: #1d2828;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Instrument Sans", system-ui, sans-serif; line-height: 1.5;
+  }
+  header { max-width: 1200px; margin: 0 auto; padding: 56px 20px 24px; }
+  h1 {
+    font-family: "Instrument Serif", Georgia, serif; font-weight: 400;
+    font-size: clamp(2.4rem, 7vw, 4.5rem); line-height: 1; margin: 0 0 12px;
+  }
+  header p { margin: 0; max-width: 52ch; color: var(--muted); }
+  main { max-width: 1200px; margin: 0 auto; padding: 8px 20px 64px; }
+
+  .grade { column-width: 260px; column-gap: 14px; }
+  .foto {
+    display: block; width: 100%; margin: 0 0 14px; padding: 0; border: 0;
+    background: var(--card); border-radius: 6px; overflow: hidden;
+    break-inside: avoid; cursor: zoom-in;
+  }
+  .foto img { display: block; width: 100%; height: auto; transition: transform .35s ease; }
+  .foto:hover img { transform: scale(1.03); }
+  .foto:focus-visible, .ctrl:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+  dialog {
+    border: 0; padding: 0; background: transparent; color: #fff;
+    max-width: 100vw; max-height: 100vh; width: 100%; height: 100%;
+  }
+  dialog::backdrop { background: rgba(8, 14, 14, .92); }
+  .vista { height: 100%; display: grid; grid-template-rows: 1fr auto; place-items: center; padding: 16px; }
+  .vista img { max-width: 100%; max-height: calc(100vh - 110px); object-fit: contain; border-radius: 4px; }
+  .legenda { padding-top: 10px; text-align: center; font-size: .95rem; }
+  .ctrl {
+    position: fixed; background: rgba(255,255,255,.12); color: #fff; border: 0;
+    width: 44px; height: 44px; border-radius: 50%; font-size: 1.4rem; cursor: pointer;
+  }
+  .ctrl:hover { background: rgba(255,255,255,.25); }
+  .fechar { top: 14px; right: 14px; }
+  .ant { left: 12px; top: 50%; transform: translateY(-50%); }
+  .prox { right: 12px; top: 50%; transform: translateY(-50%); }
+
+  footer { max-width: 1200px; margin: 0 auto; padding: 0 20px 40px; color: var(--muted); font-size: .85rem; }
+  @media (prefers-reduced-motion: reduce) { .foto img { transition: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Minha galeria</h1>
+  <p>Uma seleção de fotos. Toque ou clique em uma imagem para ampliar.</p>
+</header>
+<main><div class="grade" id="grade"></div></main>
+<footer>fotos do acidente do ano de 2026.</footer>
+
+<dialog id="lb" aria-label="Foto ampliada">
+  <button class="ctrl fechar" id="fechar" aria-label="Fechar">&times;</button>
+  <button class="ctrl ant" id="ant" aria-label="Foto anterior">&#8249;</button>
+  <button class="ctrl prox" id="prox" aria-label="Próxima foto">&#8250;</button>
+  <div class="vista"><img id="grande" alt=""><div class="legenda" id="legenda"></div></div>
+</dialog>
+
+<script>
+  /* ============================================================
+     COMO USAR SUAS FOTOS
+     1. Crie uma pasta "fotos" ao lado deste arquivo e coloque as imagens nela.
+     2. Preencha a lista abaixo, uma linha por foto:
+          { src: "fotos/praia.jpg", alt: "Descrição da foto", legenda: "Praia, 2025" },
+     3. Se a lista ficar vazia, a página mostra imagens de exemplo.
+     ============================================================ */
+  const FOTOS = [
+    { src: "fotos/1.jpeg", alt: "Fotos do acidente", legenda: "Legenda" },
+    { src: "fotos/2.jpeg", alt: "Fotos do acidente", legenda: "Legenda" },
+    { src: "fotos/3.jpeg", alt: "Fotos do acidente", legenda: "Legenda" },
+    { src: "fotos/4.jpeg", alt: "Fotos do acidente", legenda: "Legenda" },
+    { src: "fotos/5.jpeg", alt: "Fotos do acidente", legenda: "Legenda" },
+    { src: "fotos/6.jpeg", alt: "Fotos do acidente", legenda: "Legenda" },
+    { src: "fotos/7.jpeg", alt: "Fotos do acidente", legenda: "Legenda" },
+    { src: "fotos/8.jpeg", alt: "Fotos do acidente", legenda: "Legenda" },
+    { src: "fotos/9.jpeg", alt: "Fotos do acidente", legenda: "Legenda" },
+  ];
+
+  function exemplo(i) {
+    const formas = [[800,600],[600,800],[800,800],[800,550],[600,760]];
+    const [w, h] = formas[i % formas.length];
+    const h1 = (i * 47 + 160) % 360, h2 = (h1 + 50) % 360;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="hsl(${h1},45%,55%)"/><stop offset="1" stop-color="hsl(${h2},50%,35%)"/>
+      </linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/>
+      <circle cx="${w*0.7}" cy="${h*0.3}" r="${Math.min(w,h)*0.12}" fill="rgba(255,255,255,.35)"/>
+      <text x="50%" y="92%" text-anchor="middle" font-family="sans-serif" font-size="28" fill="rgba(255,255,255,.8)">Foto de exemplo ${i+1}</text></svg>`;
+    return { src: "data:image/svg+xml;utf8," + encodeURIComponent(svg),
+             alt: "Imagem de exemplo " + (i + 1), legenda: "Foto de exemplo " + (i + 1) };
+  }
+
+  const lista = FOTOS.length ? FOTOS : Array.from({ length: 12 }, (_, i) => exemplo(i));
+  const grade = document.getElementById("grade");
+  const lb = document.getElementById("lb");
+  const grande = document.getElementById("grande");
+  const legenda = document.getElementById("legenda");
+  let atual = 0;
+
+  lista.forEach((f, i) => {
+    const b = document.createElement("button");
+    b.className = "foto"; b.type = "button";
+    b.setAttribute("aria-label", "Ampliar: " + (f.alt || f.legenda || "foto " + (i + 1)));
+    const img = document.createElement("img");
+    img.src = f.src; img.alt = f.alt || ""; img.loading = "lazy";
+    b.appendChild(img);
+    b.addEventListener("click", () => abrir(i));
+    grade.appendChild(b);
+  });
+
+  function mostrar(i) {
+    atual = (i + lista.length) % lista.length;
+    const f = lista[atual];
+    grande.src = f.src; grande.alt = f.alt || "";
+    legenda.textContent = f.legenda || "";
+  }
+  function abrir(i) { mostrar(i); lb.showModal(); }
+
+  document.getElementById("fechar").onclick = () => lb.close();
+  document.getElementById("ant").onclick = () => mostrar(atual - 1);
+  document.getElementById("prox").onclick = () => mostrar(atual + 1);
+  lb.addEventListener("click", e => { if (e.target === lb) lb.close(); });
+  lb.addEventListener("keydown", e => {
+    if (e.key === "ArrowLeft") mostrar(atual - 1);
+    if (e.key === "ArrowRight") mostrar(atual + 1);
+  });
+</script>
+</body>
+</html>
